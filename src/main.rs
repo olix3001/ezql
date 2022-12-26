@@ -1,9 +1,8 @@
-use ezql_core::{
-    dialects::{Dialect, SqliteDialect},
-    prelude::*,
-};
+use ezql_core::{prelude::*, SqliteBackend};
 
 fn main() {
+    let backend = SqliteBackend::new("test.db");
+
     let table = Table {
         name: "test".to_string(),
         columns: vec![
@@ -27,5 +26,5 @@ fn main() {
 
     println!("{}", table);
 
-    println!("{}", SqliteDialect::create_table(true, table));
+    backend.create_table(true, table).unwrap();
 }

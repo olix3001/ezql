@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 default = []
-sqlite = []
+sqlite = ["rusqlite"]
 
 [dependencies]
-
+rusqlite = { version = "0.26.0", optional = true, features = ["bundled"] }
