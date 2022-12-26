@@ -1,16 +1,18 @@
-use super::ezql_types::{EzqlType, EzqlValue, HasEzqlType};
+use super::ezql_types::{EzqlType, EzqlValue};
 
 // ====< Macro for generating type mappings >====
 #[macro_export]
 macro_rules! impl_ezql_types {
     ($($type:ty => $ezql_type:ident ($($argT:expr),*)),*,) => {
         $(
-            impl HasEzqlType<$type> for EzqlType {
-                fn from_rust_type() -> EzqlType {
+            impl From<$type> for EzqlType {
+                fn from(_: $type) -> Self {
                     EzqlType::$ezql_type($($argT),*)
                 }
+            }
 
-                fn from_rust_value(value: $type) -> EzqlValue {
+            impl From<$type> for EzqlValue {
+                fn from(value: $type) -> Self {
                     EzqlValue::$ezql_type(value.into())
                 }
             }

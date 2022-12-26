@@ -21,8 +21,13 @@ create_types! {
     Boolean () => (bool),
 }
 
-// Trait for converting Rust types to Ezql types
-pub trait HasEzqlType<T> {
-    fn from_rust_type() -> EzqlType;
-    fn from_rust_value(_: T) -> EzqlValue;
+// ====< Pretty print EzqlType >====
+impl std::fmt::Display for EzqlType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            EzqlType::Integer() => write!(f, "INTEGER"),
+            EzqlType::VarChar(len) => write!(f, "VARCHAR({})", len),
+            EzqlType::Boolean() => write!(f, "BOOLEAN"),
+        }
+    }
 }
