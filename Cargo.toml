@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    ".",
+    "ezql-core"
+]
+
+[package]
+name = "ezql-v2"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["sqlite"]
+sqlite = ["ezql-core/sqlite"]
+
+[dependencies]
+ezql-core = { path = "ezql-core", version = "0.1.0" }
