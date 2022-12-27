@@ -1,12 +1,14 @@
+use crate::prelude::EzqlValue;
+
 // ====< SQL query >====
 #[derive(Debug, Clone)]
 pub struct Query {
     pub sql: String,
-    pub params: Vec<String>,
+    pub params: Vec<EzqlValue>,
 }
 
 impl Query {
-    pub fn new(sql: String, params: Vec<String>) -> Self {
+    pub fn new(sql: String, params: Vec<EzqlValue>) -> Self {
         Self { sql, params }
     }
     pub fn without_params(sql: String) -> Self {

@@ -17,4 +17,5 @@ pub trait Dialect {
 
     // ====< Advanced translations >====
     fn create_table(if_not_exists: bool, table: Table) -> Query;
+    fn insert(table: Table, models: Vec<Vec<Option<EzqlValue>>>) -> Query;
 }

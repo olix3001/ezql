@@ -4,6 +4,8 @@ pub mod dialects;
 pub mod types;
 mod utils;
 
+pub use crate::backends::Backend;
+
 pub mod prelude {
     pub use crate::backends::ModelBackend;
     pub use crate::components::column::Column;

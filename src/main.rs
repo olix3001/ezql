@@ -29,6 +29,14 @@ impl EzqlModelTrait for User {
             ],
         }
     }
+
+    fn as_column_values(&self) -> Vec<Option<EzqlValue>> {
+        vec![
+            self.id.map(EzqlValue::Integer),
+            self.name.as_ref().map(|v| EzqlValue::VarChar(v.clone())),
+            self.is_active.map(EzqlValue::Boolean),
+        ]
+    }
 }
 
 fn main() {
@@ -36,5 +44,25 @@ fn main() {
 
     println!("{}", User::get_table());
 
-    backend.create_table::<User>(false).unwrap();
+    // Create table
+    backend.create_table::<User>(true).unwrap();
+
+    // Insert data
+    let user = User {
+        id: None,
+        name: Some("John".to_string()),
+        is_active: Some(true),
+    };
+    let user2 = User {
+        id: None,
+        name: Some("Jane".to_string()),
+        is_active: Some(false),
+    };
+    let user3 = User {
+        id: None,
+        name: Some("Jack".to_string()),
+        is_active: None,
+    };
+
+    backend.insert(&[&user, &user2, &user3]).unwrap();
 }
