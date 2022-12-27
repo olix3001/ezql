@@ -1,7 +1,7 @@
 use super::column::Column;
 
 // ====< SQL table >====
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Table {
     pub name: String,
     pub columns: Vec<Column>,

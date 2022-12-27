@@ -65,4 +65,7 @@ fn main() {
     };
 
     backend.insert(&[&user, &user2, &user3]).unwrap();
+
+    // Close connection
+    ezql_core::Backend::close(backend).unwrap();
 }

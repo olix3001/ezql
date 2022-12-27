@@ -16,6 +16,14 @@ pub struct SqliteBackend {
 // ====< SQLite backend trait implementation >====
 #[cfg(feature = "sqlite")]
 impl Backend<SqliteDialect> for SqliteBackend {
+    // ====< Close connection >====
+    fn close(self) -> Result<(), Box<dyn std::error::Error>> {
+        if self.connection.close().is_err() {
+            return Err("Failed to close connection".into());
+        }
+        Ok(())
+    }
+
     // ====< Create table >====
     fn create_table(
         &self,
@@ -23,6 +31,13 @@ impl Backend<SqliteDialect> for SqliteBackend {
         table: Table,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let query = SqliteDialect::create_table(if_not_exists, table);
+        self.connection.execute(&query.sql, [])?;
+        Ok(())
+    }
+
+    // ====< Drop table >====
+    fn drop_table(&self, if_exists: bool, table: Table) -> Result<(), Box<dyn std::error::Error>> {
+        let query = SqliteDialect::drop_table(if_exists, table);
         self.connection.execute(&query.sql, [])?;
         Ok(())
     }
@@ -67,6 +82,14 @@ impl ModelBackend<SqliteDialect> for SqliteBackend {
         M: EzqlModelTrait,
     {
         Backend::create_table(self, if_not_exists, M::get_table())
+    }
+
+    // ====< Drop table >====
+    fn drop_table<M>(&self, if_exists: bool) -> Result<(), Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait,
+    {
+        Backend::drop_table(self, if_exists, M::get_table())
     }
 
     // ====< Insert >====
@@ -148,6 +171,22 @@ mod tests {
     fn test_create_dev_sqlite_backend() {
         let backend = SqliteBackend::new_in_memory();
         backends::ModelBackend::create_table::<User>(&backend, true).unwrap();
+    }
+
+    #[test]
+    fn test_drop_sqlite_backend() {
+        let backend = SqliteBackend::new_in_memory();
+        backends::ModelBackend::create_table::<User>(&backend, true).unwrap();
+        backends::ModelBackend::drop_table::<User>(&backend, true).unwrap();
+
+        // Insert should fail because table does not exist
+        let user = User {
+            id: None,
+            name: Some("John".to_string()),
+            is_active: Some(true),
+        };
+
+        assert!(backends::ModelBackend::insert::<User>(&backend, &[&user]).is_err());
     }
 
     #[test]

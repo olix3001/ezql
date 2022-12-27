@@ -1,5 +1,5 @@
 use crate::components::column::ColumnProperty::Default;
-use crate::components::query::Query;
+use crate::components::query::{Query, WhereClause};
 use crate::components::table::Table;
 use crate::dialects::Dialect;
 use crate::types::{EzqlType, EzqlValue};
@@ -45,6 +45,88 @@ impl Dialect for SqliteDialect {
         }
     }
 
+    // ====< Translate WhereClause to SQLite WHERE clause >====
+    fn translate_where_clause(where_clause: WhereClause) -> String {
+        // Add clause
+        match where_clause {
+            WhereClause::And(clauses) => {
+                let mut sql = String::new();
+
+                for (i, clause) in clauses.iter().enumerate() {
+                    sql.push_str(&Self::translate_where_clause(clause.clone()));
+
+                    if i < clauses.len() - 1 {
+                        sql.push_str(" AND ");
+                    }
+                }
+
+                sql
+            }
+            WhereClause::Or(clauses) => {
+                let mut sql = String::new();
+
+                for (i, clause) in clauses.iter().enumerate() {
+                    sql.push_str(&Self::translate_where_clause(clause.clone()));
+
+                    if i < clauses.len() - 1 {
+                        sql.push_str(" OR ");
+                    }
+                }
+
+                sql
+            }
+            WhereClause::Eq(column, value) => {
+                format!("{} = {}", column, Self::translate_value(value))
+            }
+            WhereClause::Ne(column, value) => {
+                format!("{} != {}", column, Self::translate_value(value))
+            }
+            WhereClause::Gt(column, value) => {
+                format!("{} > {}", column, Self::translate_value(value))
+            }
+            WhereClause::Lt(column, value) => {
+                format!("{} < {}", column, Self::translate_value(value))
+            }
+            WhereClause::Ge(column, value) => {
+                format!("{} >= {}", column, Self::translate_value(value))
+            }
+            WhereClause::Le(column, value) => {
+                format!("{} <= {}", column, Self::translate_value(value))
+            }
+            WhereClause::Like(column, value) => {
+                format!("{} LIKE {}", column, Self::translate_value(value))
+            }
+            WhereClause::Not(clause) => {
+                format!("NOT {}", Self::translate_where_clause(*clause))
+            }
+            WhereClause::IsNull(column) => format!("{} IS NULL", column),
+            WhereClause::IsNotNull(column) => format!("{} IS NOT NULL", column),
+            WhereClause::In(column, values) => format!(
+                "{} IN ({})",
+                column,
+                values
+                    .iter()
+                    .map(|v| Self::translate_value(v.clone()))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ),
+            WhereClause::NotIn(column, values) => format!(
+                "{} NOT IN ({})",
+                column,
+                values
+                    .iter()
+                    .map(|v| Self::translate_value(v.clone()))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ),
+            #[allow(unreachable_patterns)]
+            _ => unimplemented!(
+                "WhereClause {:?} is not implemented for SQLite dialect",
+                where_clause
+            ),
+        }
+    }
+
     // ====< Create table >====
     fn create_table(if_not_exists: bool, table: Table) -> Query {
         // Create table keyword
@@ -75,6 +157,19 @@ impl Dialect for SqliteDialect {
 
         // Close parentheses
         sql.push_str(");");
+
+        // Return query
+        Query::without_params(sql)
+    }
+
+    // ====< Drop table >====
+    fn drop_table(if_exists: bool, table: Table) -> Query {
+        // Create drop keyword
+        let sql = format!(
+            "DROP TABLE {}{};",
+            if if_exists { "IF EXISTS " } else { "" },
+            table.name
+        );
 
         // Return query
         Query::without_params(sql)

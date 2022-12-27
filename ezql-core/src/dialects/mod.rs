@@ -1,5 +1,9 @@
 use crate::{
-    components::{column::ColumnProperty, query::Query, table::Table},
+    components::{
+        column::ColumnProperty,
+        query::{Query, WhereClause},
+        table::Table,
+    },
     prelude::EzqlValue,
     types::EzqlType,
 };
@@ -15,7 +19,11 @@ pub trait Dialect {
     fn translate_value(v: EzqlValue) -> String;
     fn translate_property(p: ColumnProperty) -> String;
 
+    // ====< Query translations >====
+    fn translate_where_clause(where_clause: WhereClause) -> String;
+
     // ====< Advanced translations >====
     fn create_table(if_not_exists: bool, table: Table) -> Query;
+    fn drop_table(if_exists: bool, table: Table) -> Query;
     fn insert(table: Table, models: Vec<Vec<Option<EzqlValue>>>) -> Query;
 }
