@@ -1,5 +1,5 @@
 use crate::components::column::ColumnProperty::Default;
-use crate::components::query::{Query, WhereClause};
+use crate::components::query::{OrderBy, Query, SelectQueryParams, WhereClause};
 use crate::components::table::Table;
 use crate::dialects::Dialect;
 use crate::types::{EzqlType, EzqlValue};
@@ -46,83 +46,98 @@ impl Dialect for SqliteDialect {
     }
 
     // ====< Translate WhereClause to SQLite WHERE clause >====
-    fn translate_where_clause(where_clause: WhereClause) -> String {
+    fn translate_where_clause(where_clause: WhereClause) -> Query {
+        // Create empty query
+        let mut query = Query::empty();
         // Add clause
         match where_clause {
             WhereClause::And(clauses) => {
-                let mut sql = String::new();
-
                 for (i, clause) in clauses.iter().enumerate() {
-                    sql.push_str(&Self::translate_where_clause(clause.clone()));
+                    let q = Self::translate_where_clause(clause.clone());
+                    query.params.extend(q.params);
+                    query.sql.push_str(&format!("({})", q.sql));
 
                     if i < clauses.len() - 1 {
-                        sql.push_str(" AND ");
+                        query.sql.push_str(" AND ");
                     }
                 }
-
-                sql
             }
             WhereClause::Or(clauses) => {
-                let mut sql = String::new();
-
                 for (i, clause) in clauses.iter().enumerate() {
-                    sql.push_str(&Self::translate_where_clause(clause.clone()));
+                    let q = Self::translate_where_clause(clause.clone());
+                    query.params.extend(q.params);
+                    query.sql.push_str(&format!("({})", q.sql));
 
                     if i < clauses.len() - 1 {
-                        sql.push_str(" OR ");
+                        query.sql.push_str(" OR ");
                     }
                 }
-
-                sql
             }
             WhereClause::Eq(column, value) => {
-                format!("{} = {}", column, Self::translate_value(value))
+                query.params.push(value);
+                query.sql = format!("{} = ?", column);
             }
             WhereClause::Ne(column, value) => {
-                format!("{} != {}", column, Self::translate_value(value))
+                query.params.push(value);
+                query.sql = format!("{} != ?", column);
             }
             WhereClause::Gt(column, value) => {
-                format!("{} > {}", column, Self::translate_value(value))
-            }
-            WhereClause::Lt(column, value) => {
-                format!("{} < {}", column, Self::translate_value(value))
+                query.params.push(value);
+                query.sql = format!("{} > ?", column);
             }
             WhereClause::Ge(column, value) => {
-                format!("{} >= {}", column, Self::translate_value(value))
+                query.params.push(value);
+                query.sql = format!("{} >= ?", column);
+            }
+            WhereClause::Lt(column, value) => {
+                query.params.push(value);
+                query.sql = format!("{} < ?", column);
             }
             WhereClause::Le(column, value) => {
-                format!("{} <= {}", column, Self::translate_value(value))
+                query.params.push(value);
+                query.sql = format!("{} <= ?", column);
             }
             WhereClause::Like(column, value) => {
-                format!("{} LIKE {}", column, Self::translate_value(value))
+                query.params.push(value);
+                query.sql = format!("{} LIKE ?", column);
             }
             WhereClause::Not(clause) => {
-                format!("NOT {}", Self::translate_where_clause(*clause))
+                query.sql = format!("NOT {}", Self::translate_where_clause(*clause));
             }
-            WhereClause::IsNull(column) => format!("{} IS NULL", column),
-            WhereClause::IsNotNull(column) => format!("{} IS NOT NULL", column),
-            WhereClause::In(column, values) => format!(
-                "{} IN ({})",
-                column,
-                values
-                    .iter()
-                    .map(|v| Self::translate_value(v.clone()))
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ),
-            WhereClause::NotIn(column, values) => format!(
-                "{} NOT IN ({})",
-                column,
-                values
-                    .iter()
-                    .map(|v| Self::translate_value(v.clone()))
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ),
+            WhereClause::IsNull(column) => {
+                query.sql = format!("{} IS NULL", column);
+            }
+            WhereClause::IsNotNull(column) => {
+                query.sql = format!("{} IS NOT NULL", column);
+            }
+            WhereClause::In(column, values) => {
+                query.params.extend(values.clone());
+                query.sql = format!("{} IN ({})", column, "?,".repeat(values.len() - 1));
+            }
+            WhereClause::NotIn(column, values) => {
+                query.params.extend(values.clone());
+                query.sql = format!("{} NOT IN ({})", column, "?,".repeat(values.len() - 1));
+            }
+
             #[allow(unreachable_patterns)]
             _ => unimplemented!(
                 "WhereClause {:?} is not implemented for SQLite dialect",
                 where_clause
+            ),
+        }
+
+        query
+    }
+
+    // ====< Translate OrderBy to SQLite ORDER BY clause >====
+    fn translate_order_by(order_by: OrderBy) -> String {
+        match order_by {
+            OrderBy::Asc(column) => format!("{} ASC", column),
+            OrderBy::Desc(column) => format!("{} DESC", column),
+            #[allow(unreachable_patterns)]
+            _ => unimplemented!(
+                "OrderBy {:?} is not implemented for SQLite dialect",
+                order_by
             ),
         }
     }
@@ -243,6 +258,62 @@ impl Dialect for SqliteDialect {
         sql.pop();
         sql.pop();
         sql.pop();
+
+        // End query with semicolon
+        sql.push(';');
+
+        // Return query
+        Query::new(sql, params)
+    }
+
+    // ====< Select from table >====
+    fn select(table: Table, query_params: SelectQueryParams) -> Query {
+        // Create select keyword
+        let mut sql = "SELECT ".to_string();
+
+        // Create params
+        let mut params = Vec::new();
+
+        // Add columns from select query params
+        if let Some(select_columns) = query_params.columns {
+            sql.push_str(
+                &select_columns
+                    .iter()
+                    .map(|c| c.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "),
+            );
+        } else {
+            sql.push('*');
+        }
+
+        // Add from keyword
+        sql.push_str(&format!(" FROM {}", table.name));
+
+        // Add where clause
+        if let Some(where_clause) = query_params.where_clause {
+            let where_clause = SqliteDialect::translate_where_clause(where_clause);
+            params.extend(where_clause.params);
+            sql.push_str(&format!(" WHERE {}", where_clause.sql));
+        }
+
+        // Add order by clause
+        if let Some(order_by) = query_params.order_by {
+            sql.push_str(&format!(
+                " ORDER BY {}",
+                SqliteDialect::translate_order_by(order_by)
+            ));
+        }
+
+        // Add limit clause
+        if let Some(limit) = query_params.limit {
+            sql.push_str(&format!(" LIMIT {}", limit));
+        }
+
+        // Add offset clause
+        if let Some(offset) = query_params.offset {
+            sql.push_str(&format!(" OFFSET {}", offset));
+        }
 
         // End query with semicolon
         sql.push(';');

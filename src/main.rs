@@ -1,4 +1,9 @@
-use ezql_core::{prelude::*, SqliteBackend};
+use ezql_core::{
+    dialects::{Dialect, SqliteDialect},
+    prelude::*,
+    queries::{OrderBy, SelectQueryParams, WhereClause},
+    SqliteBackend,
+};
 
 struct User {
     id: Option<i32>,
@@ -65,6 +70,27 @@ fn main() {
     };
 
     backend.insert(&[&user, &user2, &user3]).unwrap();
+
+    // Select data
+    let select_params = SelectQueryParams {
+        columns: Some(vec!["id".to_string(), "name".to_string()]),
+        where_clause: Some(WhereClause::And(vec![
+            WhereClause::Eq("name".to_string(), EzqlValue::VarChar("John".to_string())),
+            WhereClause::Eq("is_active".to_string(), EzqlValue::Boolean(true)),
+            WhereClause::Or(vec![
+                WhereClause::Eq("name".to_string(), EzqlValue::VarChar("Jane".to_string())),
+                WhereClause::Eq("name".to_string(), EzqlValue::VarChar("Jack".to_string())),
+            ]),
+        ])),
+        order_by: Some(OrderBy::Desc("id".to_string())),
+        limit: Some(4),
+        offset: None,
+    };
+
+    println!(
+        "{:?}",
+        SqliteDialect::select(User::get_table(), select_params)
+    );
 
     // Close connection
     ezql_core::Backend::close(backend).unwrap();

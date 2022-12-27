@@ -1,4 +1,4 @@
-use crate::prelude::{EzqlValue, Table};
+use crate::prelude::EzqlValue;
 
 // ====< SQL query >====
 #[derive(Debug, Clone)]
@@ -14,6 +14,9 @@ impl Query {
     pub fn without_params(sql: String) -> Self {
         Self::new(sql, vec![])
     }
+    pub fn empty() -> Self {
+        Self::without_params(String::new())
+    }
 }
 
 // ====< Pretty print query >====
@@ -26,8 +29,7 @@ impl std::fmt::Display for Query {
 // ====< Select query parameters >====
 #[derive(Debug, Clone)]
 pub struct SelectQueryParams {
-    pub table: Table,
-    pub columns: Vec<String>,
+    pub columns: Option<Vec<String>>,
     pub where_clause: Option<WhereClause>,
     pub order_by: Option<OrderBy>,
     pub limit: Option<usize>,
@@ -55,14 +57,7 @@ pub enum WhereClause {
 
 // ====< Order by >====
 #[derive(Debug, Clone)]
-pub struct OrderBy {
-    pub column: String,
-    pub order: Order,
-}
-
-// ====< Order >====
-#[derive(Debug, Clone)]
-pub enum Order {
-    Asc,
-    Desc,
+pub enum OrderBy {
+    Asc(String),
+    Desc(String),
 }

@@ -6,6 +6,13 @@ mod utils;
 
 pub use crate::backends::Backend;
 
+pub mod queries {
+    pub use crate::components::query::OrderBy;
+    pub use crate::components::query::Query;
+    pub use crate::components::query::SelectQueryParams;
+    pub use crate::components::query::WhereClause;
+}
+
 pub mod prelude {
     pub use crate::backends::ModelBackend;
     pub use crate::components::column::Column;
