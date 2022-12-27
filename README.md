@@ -7,7 +7,7 @@ My goal is to make it easy to use and easy to understand :smile: without need to
 
 -   Queries
     -   [ ] Select
-    -   [ ] Insert
+    -   [x] Insert
     -   [ ] Update
     -   [ ] Delete
 -   Relations
@@ -21,7 +21,7 @@ My goal is to make it easy to use and easy to understand :smile: without need to
 -   SQL Dialects
     -   [ ] MySQL
     -   [ ] PostgreSQL
-    -   [ ] SQLite
+    -   [x] SQLite
     -   [ ] SQL Server
 
 ## Usage
