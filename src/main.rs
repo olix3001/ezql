@@ -75,11 +75,11 @@ fn main() {
     let select_params = SelectQueryParams {
         columns: Some(vec!["id".to_string(), "name".to_string()]),
         where_clause: Some(WhereClause::And(vec![
-            WhereClause::Eq("name".to_string(), EzqlValue::VarChar("John".to_string())),
-            WhereClause::Eq("is_active".to_string(), EzqlValue::Boolean(true)),
+            WhereClause::Eq("name".to_string(), "John".into()),
+            WhereClause::Eq("is_active".to_string(), true.into()),
             WhereClause::Or(vec![
-                WhereClause::Eq("name".to_string(), EzqlValue::VarChar("Jane".to_string())),
-                WhereClause::Eq("name".to_string(), EzqlValue::VarChar("Jack".to_string())),
+                WhereClause::Eq("name".to_string(), "Jane".into()),
+                WhereClause::Eq("name".to_string(), "Jack".into()),
             ]),
         ])),
         order_by: Some(OrderBy::Desc("id".to_string())),

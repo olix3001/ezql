@@ -24,5 +24,6 @@ macro_rules! impl_ezql_types {
 impl_ezql_types!(
     i32 => Integer(),
     String => VarChar(255),
+    &str => VarChar(255),
     bool => Boolean(),
 );
