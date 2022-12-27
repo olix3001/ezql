@@ -94,3 +94,71 @@ impl rusqlite::types::ToSql for EzqlValue {
         }
     }
 }
+
+// ========< TESTS >========
+#[cfg(test)]
+mod tests {
+    use crate::{
+        backends,
+        prelude::{Column, ColumnProperty, EzqlType},
+    };
+
+    use super::*;
+
+    struct User {
+        id: Option<i32>,
+        name: Option<String>,
+        is_active: Option<bool>,
+    }
+
+    impl EzqlModelTrait for User {
+        fn get_table() -> Table {
+            Table {
+                name: "users".to_string(),
+                columns: vec![
+                    Column {
+                        name: "id".to_string(),
+                        data_type: EzqlType::Integer(),
+                        properties: vec![ColumnProperty::PrimaryKey],
+                    },
+                    Column {
+                        name: "name".to_string(),
+                        data_type: EzqlType::VarChar(255),
+                        properties: vec![ColumnProperty::NotNull],
+                    },
+                    Column {
+                        name: "is_active".to_string(),
+                        data_type: EzqlType::Boolean(),
+                        properties: vec![ColumnProperty::default(false)],
+                    },
+                ],
+            }
+        }
+
+        fn as_column_values(&self) -> Vec<Option<EzqlValue>> {
+            vec![
+                self.id.map(EzqlValue::Integer),
+                self.name.as_ref().map(|v| EzqlValue::VarChar(v.clone())),
+                self.is_active.map(EzqlValue::Boolean),
+            ]
+        }
+    }
+
+    #[test]
+    fn test_create_dev_sqlite_backend() {
+        let backend = SqliteBackend::new_in_memory();
+        backends::ModelBackend::create_table::<User>(&backend, true).unwrap();
+    }
+
+    #[test]
+    fn test_insert_sqlite_backend() {
+        let backend = SqliteBackend::new_in_memory();
+        let user = User {
+            id: None,
+            name: Some("John".to_string()),
+            is_active: Some(true),
+        };
+        backends::ModelBackend::create_table::<User>(&backend, true).unwrap();
+        backends::ModelBackend::insert::<User>(&backend, &[&user]).unwrap();
+    }
+}
