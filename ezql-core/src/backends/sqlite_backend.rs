@@ -2,10 +2,10 @@ use rusqlite::Connection;
 
 use crate::{
     dialects::{Dialect, SqliteDialect},
-    prelude::Table,
+    prelude::{EzqlModelTrait, Table},
 };
 
-use super::Backend;
+use super::{Backend, ModelBackend};
 
 // ====< SQLite backend >====
 #[cfg(feature = "sqlite")]
@@ -40,5 +40,16 @@ impl SqliteBackend {
         Self {
             connection: Connection::open_in_memory().unwrap(),
         }
+    }
+}
+
+// ====< SQlite model backend trait implementation >====
+#[cfg(feature = "sqlite")]
+impl ModelBackend<SqliteDialect> for SqliteBackend {
+    fn create_table<M>(&self, if_not_exists: bool) -> Result<(), Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait,
+    {
+        Backend::create_table(self, if_not_exists, M::get_table())
     }
 }
