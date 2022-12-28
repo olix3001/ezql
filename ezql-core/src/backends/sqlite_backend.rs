@@ -3,7 +3,7 @@ use rusqlite::Connection;
 use crate::{
     dialects::{Dialect, SqliteDialect},
     prelude::{EzqlModelTrait, EzqlValue, Table},
-    queries::SelectQueryParams,
+    queries::{SelectQueryParams, UpdateQueryParams},
 };
 
 use super::{Backend, ModelBackend};
@@ -104,6 +104,19 @@ impl Backend<SqliteDialect> for SqliteBackend {
             rusqlite::params_from_iter(delete_query.params.as_slice()),
         )?)
     }
+
+    // ====< Update >====
+    fn update(
+        &self,
+        table: &Table,
+        query: UpdateQueryParams,
+    ) -> Result<usize, Box<dyn std::error::Error>> {
+        let update_query = SqliteDialect::update(table, query);
+        Ok(self.connection.execute(
+            &update_query.sql,
+            rusqlite::params_from_iter(update_query.params.as_slice()),
+        )?)
+    }
 }
 
 // ====< SQLite backend implementation >====
@@ -176,6 +189,15 @@ impl ModelBackend<SqliteDialect> for SqliteBackend {
     {
         let table = M::get_table();
         Backend::delete(self, &table, query)
+    }
+
+    // ====< Update >====
+    fn update<M>(&self, query: UpdateQueryParams) -> Result<usize, Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait,
+    {
+        let table = M::get_table();
+        Backend::update(self, &table, query)
     }
 }
 
@@ -374,5 +396,57 @@ mod tests {
         )
         .unwrap();
         assert_eq!(users.len(), 0);
+    }
+
+    #[test]
+    fn test_update_sqlite_backend() {
+        let backend = SqliteBackend::new_in_memory();
+        let user = User {
+            id: None,
+            name: Some("John".to_string()),
+            is_active: Some(true),
+        };
+        backends::ModelBackend::create_table::<User>(&backend, true).unwrap();
+        backends::ModelBackend::insert::<User>(&backend, &[&user]).unwrap();
+        let users = backends::ModelBackend::select::<User>(
+            &backend,
+            SelectQueryParams {
+                columns: Some(vec!["name".to_string()]),
+                where_clause: None,
+                order_by: None,
+                limit: None,
+                offset: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].name, Some("John".to_string()));
+
+        backends::ModelBackend::update::<User>(
+            &backend,
+            UpdateQueryParams {
+                set: vec![
+                    ("name".to_string(), "Jane".into()),
+                    ("is_active".to_string(), false.into()),
+                ],
+                where_clause: Some(WhereClause::All),
+            },
+        )
+        .unwrap();
+
+        let users = backends::ModelBackend::select::<User>(
+            &backend,
+            SelectQueryParams {
+                columns: Some(vec!["name".to_string(), "is_active".to_string()]),
+                where_clause: None,
+                order_by: None,
+                limit: None,
+                offset: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].name, Some("Jane".to_string()));
+        assert_eq!(users[0].is_active, Some(false));
     }
 }

@@ -8,7 +8,7 @@ My goal is to make it easy to use and easy to understand :smile: without need to
 -   Queries
     -   [x] Select
     -   [x] Insert
-    -   [ ] Update
+    -   [x] Update
     -   [x] Delete
 -   Relations
     -   [ ] One to One

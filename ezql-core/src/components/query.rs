@@ -62,3 +62,10 @@ pub enum OrderBy {
     Asc(String),
     Desc(String),
 }
+
+// ====< Update query parameters >====
+#[derive(Debug, Clone)]
+pub struct UpdateQueryParams {
+    pub set: Vec<(String, EzqlValue)>,
+    pub where_clause: Option<WhereClause>,
+}

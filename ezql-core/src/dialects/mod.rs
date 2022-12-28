@@ -1,7 +1,7 @@
 use crate::{
     components::{
         column::ColumnProperty,
-        query::{OrderBy, Query, SelectQueryParams, WhereClause},
+        query::{OrderBy, Query, SelectQueryParams, UpdateQueryParams, WhereClause},
         table::Table,
     },
     prelude::EzqlValue,
@@ -29,4 +29,5 @@ pub trait Dialect {
     fn insert(table: &Table, models: Vec<Vec<Option<EzqlValue>>>) -> Query;
     fn select(table: &Table, query_params: SelectQueryParams) -> Query;
     fn delete(table: &Table, query_params: SelectQueryParams) -> Query;
+    fn update(table: &Table, query_params: UpdateQueryParams) -> Query;
 }

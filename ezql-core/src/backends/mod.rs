@@ -1,7 +1,7 @@
 use crate::{
     dialects::Dialect,
     prelude::{EzqlModelTrait, EzqlValue, Table},
-    queries::SelectQueryParams,
+    queries::{SelectQueryParams, UpdateQueryParams},
 };
 
 #[cfg(feature = "sqlite")]
@@ -45,6 +45,13 @@ where
         table: &Table,
         query: SelectQueryParams,
     ) -> Result<usize, Box<dyn std::error::Error>>;
+
+    // ====< Update >====
+    fn update(
+        &self,
+        table: &Table,
+        query: UpdateQueryParams,
+    ) -> Result<usize, Box<dyn std::error::Error>>;
 }
 
 // ====< Model backend trait >====
@@ -74,6 +81,11 @@ where
 
     // ====< Delete >====
     fn delete<M>(&self, query: SelectQueryParams) -> Result<usize, Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait;
+
+    // ====< Update >====
+    fn update<M>(&self, query: UpdateQueryParams) -> Result<usize, Box<dyn std::error::Error>>
     where
         M: EzqlModelTrait;
 }

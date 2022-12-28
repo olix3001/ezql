@@ -1,6 +1,6 @@
 use ezql_core::{
     prelude::*,
-    queries::{OrderBy, SelectQueryParams, WhereClause},
+    queries::{OrderBy, SelectQueryParams, UpdateQueryParams, WhereClause},
     SqliteBackend,
 };
 
@@ -99,6 +99,19 @@ fn main() {
     println!(
         "Deleted {} rows",
         backend.delete::<User>(select_params).unwrap()
+    );
+
+    let update_params = UpdateQueryParams {
+        set: vec![
+            ("name".to_string(), "ImActive".into()),
+            ("is_active".to_string(), true.into()),
+        ],
+        where_clause: Some(WhereClause::Eq("is_active".to_string(), false.into())),
+    };
+
+    println!(
+        "Updated {} rows",
+        backend.update::<User>(update_params).unwrap()
     );
 
     // Close connection

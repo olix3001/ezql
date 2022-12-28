@@ -10,6 +10,7 @@ pub mod queries {
     pub use crate::components::query::OrderBy;
     pub use crate::components::query::Query;
     pub use crate::components::query::SelectQueryParams;
+    pub use crate::components::query::UpdateQueryParams;
     pub use crate::components::query::WhereClause;
 }
 

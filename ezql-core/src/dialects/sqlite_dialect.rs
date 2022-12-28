@@ -1,5 +1,5 @@
 use crate::components::column::ColumnProperty::Default;
-use crate::components::query::{OrderBy, Query, SelectQueryParams, WhereClause};
+use crate::components::query::{OrderBy, Query, SelectQueryParams, UpdateQueryParams, WhereClause};
 use crate::components::table::Table;
 use crate::dialects::Dialect;
 use crate::types::{EzqlType, EzqlValue};
@@ -333,6 +333,40 @@ impl Dialect for SqliteDialect {
 
         // Create params
         let mut params = Vec::new();
+
+        // Add where clause
+        if let Some(where_clause) = query_params.where_clause {
+            let where_clause = SqliteDialect::translate_where_clause(where_clause);
+            params.extend(where_clause.params);
+            sql.push_str(&format!(" WHERE {}", where_clause.sql));
+        }
+
+        // Ignore order by, limit and offset
+
+        // End query with semicolon
+        sql.push(';');
+
+        // Return query
+        Query::new(sql, params)
+    }
+
+    // ====< Update table >====
+    fn update(table: &Table, query_params: UpdateQueryParams) -> Query {
+        // Create update keyword
+        let mut sql = format!("UPDATE {} SET ", table.name);
+
+        // Create params
+        let mut params = Vec::new();
+
+        // Set columns
+        for column in query_params.set.iter() {
+            sql.push_str(&format!("{} = ?, ", column.0));
+            params.push(column.1.clone());
+        }
+
+        // Remove comma
+        sql.pop();
+        sql.pop();
 
         // Add where clause
         if let Some(where_clause) = query_params.where_clause {
