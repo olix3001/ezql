@@ -38,6 +38,13 @@ where
         table: &Table,
         query: SelectQueryParams,
     ) -> Result<Vec<Vec<Option<EzqlValue>>>, Box<dyn std::error::Error>>;
+
+    // ====< Delete >====
+    fn delete(
+        &self,
+        table: &Table,
+        query: SelectQueryParams,
+    ) -> Result<usize, Box<dyn std::error::Error>>;
 }
 
 // ====< Model backend trait >====
@@ -62,6 +69,11 @@ where
 
     // ====< Select >====
     fn select<M>(&self, query: SelectQueryParams) -> Result<Vec<M>, Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait;
+
+    // ====< Delete >====
+    fn delete<M>(&self, query: SelectQueryParams) -> Result<usize, Box<dyn std::error::Error>>
     where
         M: EzqlModelTrait;
 }

@@ -90,7 +90,16 @@ fn main() {
         offset: None,
     };
 
-    println!("{:?}", backend.select::<User>(select_params).unwrap());
+    println!(
+        "{:?}",
+        backend.select::<User>(select_params.clone()).unwrap()
+    );
+
+    // Delete data
+    println!(
+        "Deleted {} rows",
+        backend.delete::<User>(select_params).unwrap()
+    );
 
     // Close connection
     ezql_core::Backend::close(backend).unwrap();

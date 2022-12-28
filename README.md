@@ -9,7 +9,7 @@ My goal is to make it easy to use and easy to understand :smile: without need to
     -   [x] Select
     -   [x] Insert
     -   [ ] Update
-    -   [ ] Delete
+    -   [x] Delete
 -   Relations
     -   [ ] One to One
     -   [ ] One to Many

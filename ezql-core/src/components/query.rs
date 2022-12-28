@@ -39,6 +39,7 @@ pub struct SelectQueryParams {
 // ====< Where clause >====
 #[derive(Debug, Clone)]
 pub enum WhereClause {
+    All,
     And(Vec<WhereClause>),
     Or(Vec<WhereClause>),
     Eq(String, EzqlValue),

@@ -28,4 +28,5 @@ pub trait Dialect {
     fn drop_table(if_exists: bool, table: Table) -> Query;
     fn insert(table: &Table, models: Vec<Vec<Option<EzqlValue>>>) -> Query;
     fn select(table: &Table, query_params: SelectQueryParams) -> Query;
+    fn delete(table: &Table, query_params: SelectQueryParams) -> Query;
 }

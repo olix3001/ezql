@@ -91,6 +91,19 @@ impl Backend<SqliteDialect> for SqliteBackend {
         }
         Ok(result)
     }
+
+    // ====< Delete >====
+    fn delete(
+        &self,
+        table: &Table,
+        query: SelectQueryParams,
+    ) -> Result<usize, Box<dyn std::error::Error>> {
+        let delete_query = SqliteDialect::delete(table, query);
+        Ok(self.connection.execute(
+            &delete_query.sql,
+            rusqlite::params_from_iter(delete_query.params.as_slice()),
+        )?)
+    }
 }
 
 // ====< SQLite backend implementation >====
@@ -155,6 +168,15 @@ impl ModelBackend<SqliteDialect> for SqliteBackend {
         }
         Ok(result)
     }
+
+    // ====< Delete >====
+    fn delete<M>(&self, query: SelectQueryParams) -> Result<usize, Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait,
+    {
+        let table = M::get_table();
+        Backend::delete(self, &table, query)
+    }
 }
 
 // ====< Impl ToSql for EzqlValue >====
@@ -191,6 +213,7 @@ mod tests {
     use crate::{
         backends,
         prelude::{Column, ColumnProperty, EzqlType},
+        queries::WhereClause,
     };
 
     use super::*;
@@ -301,5 +324,55 @@ mod tests {
         .unwrap();
         assert_eq!(users.len(), 1);
         assert_eq!(users[0].name, Some("John".to_string()));
+    }
+
+    #[test]
+    fn test_delete_sqlite_backend() {
+        let backend = SqliteBackend::new_in_memory();
+        let user = User {
+            id: None,
+            name: Some("John".to_string()),
+            is_active: Some(true),
+        };
+        backends::ModelBackend::create_table::<User>(&backend, true).unwrap();
+        backends::ModelBackend::insert::<User>(&backend, &[&user]).unwrap();
+        let users = backends::ModelBackend::select::<User>(
+            &backend,
+            SelectQueryParams {
+                columns: Some(vec!["name".to_string()]),
+                where_clause: None,
+                order_by: None,
+                limit: None,
+                offset: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].name, Some("John".to_string()));
+
+        backends::ModelBackend::delete::<User>(
+            &backend,
+            SelectQueryParams {
+                columns: None,
+                where_clause: Some(WhereClause::All),
+                order_by: None,
+                limit: None,
+                offset: None,
+            },
+        )
+        .unwrap();
+
+        let users = backends::ModelBackend::select::<User>(
+            &backend,
+            SelectQueryParams {
+                columns: Some(vec!["name".to_string()]),
+                where_clause: None,
+                order_by: None,
+                limit: None,
+                offset: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(users.len(), 0);
     }
 }

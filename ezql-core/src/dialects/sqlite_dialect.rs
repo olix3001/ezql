@@ -119,6 +119,10 @@ impl Dialect for SqliteDialect {
                 query.sql = format!("{} NOT IN ({})", column, "?,".repeat(values.len() - 1));
             }
 
+            WhereClause::All => {
+                query.sql = "1 = 1".to_string();
+            }
+
             #[allow(unreachable_patterns)]
             _ => unimplemented!(
                 "WhereClause {:?} is not implemented for SQLite dialect",
@@ -314,6 +318,30 @@ impl Dialect for SqliteDialect {
         if let Some(offset) = query_params.offset {
             sql.push_str(&format!(" OFFSET {}", offset));
         }
+
+        // End query with semicolon
+        sql.push(';');
+
+        // Return query
+        Query::new(sql, params)
+    }
+
+    // ====< Delete from table >====
+    fn delete(table: &Table, query_params: SelectQueryParams) -> Query {
+        // Create delete keyword
+        let mut sql = format!("DELETE FROM {}", table.name);
+
+        // Create params
+        let mut params = Vec::new();
+
+        // Add where clause
+        if let Some(where_clause) = query_params.where_clause {
+            let where_clause = SqliteDialect::translate_where_clause(where_clause);
+            params.extend(where_clause.params);
+            sql.push_str(&format!(" WHERE {}", where_clause.sql));
+        }
+
+        // Ignore order by, limit and offset
 
         // End query with semicolon
         sql.push(';');
