@@ -6,7 +6,7 @@ My goal is to make it easy to use and easy to understand :smile: without need to
 ## Features
 
 -   Queries
-    -   [ ] Select
+    -   [x] Select
     -   [x] Insert
     -   [ ] Update
     -   [ ] Delete
