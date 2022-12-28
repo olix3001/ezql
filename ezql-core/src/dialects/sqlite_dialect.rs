@@ -191,7 +191,7 @@ impl Dialect for SqliteDialect {
     }
 
     // ====< Insert into table >====
-    fn insert(table: Table, models: Vec<Vec<Option<EzqlValue>>>) -> Query {
+    fn insert(table: &Table, models: Vec<Vec<Option<EzqlValue>>>) -> Query {
         // Create insert keyword
         let mut sql = format!("INSERT INTO {} (", table.name);
 
@@ -267,7 +267,7 @@ impl Dialect for SqliteDialect {
     }
 
     // ====< Select from table >====
-    fn select(table: Table, query_params: SelectQueryParams) -> Query {
+    fn select(table: &Table, query_params: SelectQueryParams) -> Query {
         // Create select keyword
         let mut sql = "SELECT ".to_string();
 

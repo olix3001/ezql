@@ -19,6 +19,7 @@ create_types! {
     Integer () => (i32),
     VarChar (usize) => (String),
     Boolean () => (bool),
+    Null () => (),
 }
 
 // ====< Pretty print EzqlType >====
@@ -28,6 +29,7 @@ impl std::fmt::Display for EzqlType {
             EzqlType::Integer() => write!(f, "INTEGER"),
             EzqlType::VarChar(len) => write!(f, "VARCHAR({})", len),
             EzqlType::Boolean() => write!(f, "BOOLEAN"),
+            EzqlType::Null() => write!(f, "NULL"),
         }
     }
 }

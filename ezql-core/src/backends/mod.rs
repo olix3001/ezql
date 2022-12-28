@@ -1,6 +1,7 @@
 use crate::{
     dialects::Dialect,
     prelude::{EzqlModelTrait, EzqlValue, Table},
+    queries::SelectQueryParams,
 };
 
 #[cfg(feature = "sqlite")]
@@ -27,9 +28,16 @@ where
     // ====< Insert >====
     fn insert(
         &self,
-        table: Table,
+        table: &Table,
         models: Vec<Vec<Option<EzqlValue>>>,
     ) -> Result<(), Box<dyn std::error::Error>>;
+
+    // ====< Select >====
+    fn select(
+        &self,
+        table: &Table,
+        query: SelectQueryParams,
+    ) -> Result<Vec<Vec<Option<EzqlValue>>>, Box<dyn std::error::Error>>;
 }
 
 // ====< Model backend trait >====
@@ -49,6 +57,11 @@ where
 
     // ====< Insert >====
     fn insert<M>(&self, models: &[&M]) -> Result<(), Box<dyn std::error::Error>>
+    where
+        M: EzqlModelTrait;
+
+    // ====< Select >====
+    fn select<M>(&self, query: SelectQueryParams) -> Result<Vec<M>, Box<dyn std::error::Error>>
     where
         M: EzqlModelTrait;
 }

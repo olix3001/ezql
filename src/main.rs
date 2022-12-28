@@ -1,10 +1,10 @@
 use ezql_core::{
-    dialects::{Dialect, SqliteDialect},
     prelude::*,
     queries::{OrderBy, SelectQueryParams, WhereClause},
     SqliteBackend,
 };
 
+#[derive(Debug)]
 struct User {
     id: Option<i32>,
     name: Option<String>,
@@ -42,6 +42,16 @@ impl EzqlModelTrait for User {
             self.is_active.map(EzqlValue::Boolean),
         ]
     }
+
+    fn from_column_values(
+        values: Vec<Option<EzqlValue>>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self {
+            id: values[0].as_ref().map(|v| v.into()),
+            name: values[1].as_ref().map(|v| v.into()),
+            is_active: values[2].as_ref().map(|v| v.into()),
+        })
+    }
 }
 
 fn main() {
@@ -73,24 +83,14 @@ fn main() {
 
     // Select data
     let select_params = SelectQueryParams {
-        columns: Some(vec!["id".to_string(), "name".to_string()]),
-        where_clause: Some(WhereClause::And(vec![
-            WhereClause::Eq("name".to_string(), "John".into()),
-            WhereClause::Eq("is_active".to_string(), true.into()),
-            WhereClause::Or(vec![
-                WhereClause::Eq("name".to_string(), "Jane".into()),
-                WhereClause::Eq("name".to_string(), "Jack".into()),
-            ]),
-        ])),
+        columns: Some(vec!["id".to_string(), "is_active".to_string()]),
+        where_clause: Some(WhereClause::Eq("name".to_string(), "John".into())),
         order_by: Some(OrderBy::Desc("id".to_string())),
         limit: Some(4),
         offset: None,
     };
 
-    println!(
-        "{:?}",
-        SqliteDialect::select(User::get_table(), select_params)
-    );
+    println!("{:?}", backend.select::<User>(select_params).unwrap());
 
     // Close connection
     ezql_core::Backend::close(backend).unwrap();
